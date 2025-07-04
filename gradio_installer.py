@@ -39,8 +39,10 @@ def create_or_update_venv() -> Path:
 
 
 def install_backend(python: str) -> None:
-    subprocess.check_call("git submodule init", shell=sys.platform == "linux")
-    subprocess.check_call("git submodule update", shell=sys.platform == "linux")
+    subprocess.check_call(
+        "git submodule update --init --recursive",
+        shell=sys.platform == "linux",
+    )
     backend_installer = Path("backend/installer.py")
     if backend_installer.exists():
         subprocess.check_call(f"{python} {backend_installer} local", shell=sys.platform == "linux")

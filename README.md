@@ -51,8 +51,7 @@ Manual method below for those that want it.
 ```
 git clone https://github.com/derrian-distro/LoRA_Easy_Training_Scripts
 cd LoRA_Easy_Training_Scripts
-git submodule init
-git submodule update
+git submodule update --init --recursive
 cd sd_scripts
 python3.10 -m venv venv //python3.10 and 3.11 both work
 source venv/bin/activate
