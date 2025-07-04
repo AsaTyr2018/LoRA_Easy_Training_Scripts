@@ -2,3 +2,4 @@ pyside6
 qt-material==2.14
 toml
 requests
+gradio
