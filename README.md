@@ -92,7 +92,7 @@ There was a docker image created for the LoRA_Easy_Training_Scripts_Backend for 
 
 ## Usage
 
-You can launch the UI using the `run.bat` file if you are on windows, or `run.sh` file if you are on linux.
+Launch the Gradio interface using `run.bat` on Windows or `run.sh` on Linux.
 
 The UI looks like this:
 
