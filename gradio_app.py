@@ -17,6 +17,70 @@ import gradio as gr
 
 training_thread: Thread | None = None
 
+# Default args mirroring the PySide6 UI
+DEFAULT_ARGS = {
+    "general": {
+        "args": {
+            "mixed_precision": "fp16",
+            "seed": 23,
+            "clip_skip": 2,
+            "max_train_epochs": 1,
+            "max_data_loader_n_workers": 1,
+            "persistent_data_loader_workers": True,
+            "max_token_length": 225,
+            "prior_loss_weight": 1.0,
+        },
+        "dataset_args": {"resolution": 512, "batch_size": 1},
+    },
+    "network": {
+        "args": {
+            "network_dim": 32,
+            "network_alpha": 16.0,
+            "min_timestep": 0,
+            "max_timestep": 1000,
+        }
+    },
+    "optimizer": {
+        "args": {
+            "optimizer_type": "AdamW",
+            "lr_scheduler": "cosine",
+            "learning_rate": 1e-4,
+            "max_grad_norm": 1.0,
+            "loss_type": "l2",
+        }
+    },
+    "saving": {
+        "args": {"save_precision": "fp16", "save_model_as": "safetensors"}
+    },
+    "bucket": {
+        "dataset_args": {
+            "enable_bucket": True,
+            "min_bucket_reso": 256,
+            "max_bucket_reso": 1024,
+            "bucket_reso_steps": 64,
+        }
+    },
+    "noise_offset": {"args": {"noise_offset": 0.1}},
+    "sample": {
+        "args": {
+            "sample_sampler": "ddim",
+            "sample_every_n_steps": 1,
+            "sample_prompts": "",
+        }
+    },
+    "logging": {
+        "args": {
+            "log_with": "tensorboard",
+            "logging_dir": "",
+            "log_prefix": "",
+            "log_tracker_name": "",
+            "wandb_api_key": "",
+        }
+    },
+    "flux": {"args": {}},
+    "extra": {},
+}
+
 
 def build_args(
     general: str,
@@ -405,25 +469,55 @@ with gr.Blocks(title="LoRA Trainer") as demo:
             with gr.Tabs() as tabs:
                 with gr.Tab("Main Args"):
                     with gr.Accordion("General Args", open=True):
-                        general = gr.Textbox(label="General settings", placeholder="...")
+                        general = gr.Textbox(
+                            label="General settings",
+                            value=json.dumps(DEFAULT_ARGS["general"], indent=2),
+                        )
                     with gr.Accordion("Network Args"):
-                        network = gr.Textbox(label="Network settings", placeholder="...")
+                        network = gr.Textbox(
+                            label="Network settings",
+                            value=json.dumps(DEFAULT_ARGS["network"], indent=2),
+                        )
                     with gr.Accordion("Optimizer Args"):
-                        optimizer = gr.Textbox(label="Optimizer settings", placeholder="...")
+                        optimizer = gr.Textbox(
+                            label="Optimizer settings",
+                            value=json.dumps(DEFAULT_ARGS["optimizer"], indent=2),
+                        )
                     with gr.Accordion("Saving Args"):
-                        saving = gr.Textbox(label="Saving settings", placeholder="...")
+                        saving = gr.Textbox(
+                            label="Saving settings",
+                            value=json.dumps(DEFAULT_ARGS["saving"], indent=2),
+                        )
                     with gr.Accordion("Bucket Args"):
-                        bucket = gr.Textbox(label="Bucket settings", placeholder="...")
+                        bucket = gr.Textbox(
+                            label="Bucket settings",
+                            value=json.dumps(DEFAULT_ARGS["bucket"], indent=2),
+                        )
                     with gr.Accordion("Noise Offset Args"):
-                        noise_offset = gr.Textbox(label="Noise Offset settings", placeholder="...")
+                        noise_offset = gr.Textbox(
+                            label="Noise Offset settings",
+                            value=json.dumps(DEFAULT_ARGS["noise_offset"], indent=2),
+                        )
                     with gr.Accordion("Sample Args"):
-                        sample = gr.Textbox(label="Sample settings", placeholder="...")
+                        sample = gr.Textbox(
+                            label="Sample settings",
+                            value=json.dumps(DEFAULT_ARGS["sample"], indent=2),
+                        )
                     with gr.Accordion("Logging Args"):
-                        logging = gr.Textbox(label="Logging settings", placeholder="...")
+                        logging = gr.Textbox(
+                            label="Logging settings",
+                            value=json.dumps(DEFAULT_ARGS["logging"], indent=2),
+                        )
                     with gr.Accordion("Flux Args"):
-                        flux = gr.Textbox(label="Flux settings", placeholder="...")
+                        flux = gr.Textbox(
+                            label="Flux settings",
+                            value=json.dumps(DEFAULT_ARGS["flux"], indent=2),
+                        )
                     with gr.Accordion("Extra Args"):
-                        extra = gr.Textbox(label="Extra settings", placeholder="...")
+                        extra = gr.Textbox(
+                            label="Extra settings",
+                            value=json.dumps(DEFAULT_ARGS["extra"], indent=2),
+                        )
                 with gr.Tab("Subset Args"):
                     subsets = gr.Dataframe(headers=["Subset Path", "Repeats"], datatype=["str", "number"], label="Subsets")
         with gr.Column(scale=1):
