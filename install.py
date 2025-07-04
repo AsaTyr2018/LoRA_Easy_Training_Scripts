@@ -5,15 +5,18 @@ import sys
 from pathlib import Path
 
 
-def check_version_and_platform() -> bool:
+SUPPORTED_PLATFORMS = {"win32", "linux"}
+
+
+def check_environment() -> bool:
+    """Validate python version, platform and git installation."""
     version = sys.version_info
-    if not (False if version.major != 3 and version.minor < 10 else sys.platform in ["win32", "linux"]):
-        print("ERROR: you have too old of a python version")
+    if version.major != 3 or version.minor < 10:
+        print("ERROR: Python >= 3.10 required")
         return False
-    return True
-
-
-def check_git_install() -> None:
+    if sys.platform not in SUPPORTED_PLATFORMS:
+        print(f"ERROR: unsupported platform {sys.platform}")
+        return False
     try:
         subprocess.check_call(
             "git --version",
@@ -21,41 +24,61 @@ def check_git_install() -> None:
             stderr=subprocess.DEVNULL,
             shell=sys.platform == "linux",
         )
-    except FileNotFoundError:
+    except Exception:
         print("ERROR: git is not installed, please install git")
         return False
     return True
 
 
-def main():
-    if not check_version_and_platform():
-        return
-    if not check_git_install():
-        return
+def create_virtualenv() -> Path:
+    """Create venv and install python requirements."""
     python = sys.executable
     subprocess.check_call(f"{python} -m venv venv", shell=sys.platform == "linux")
-    venv_path = Path("venv/Scripts/pip.exe" if sys.platform == "win32" else "venv/bin/pip")
-    subprocess.check_call(f"{venv_path} install -U -r requirements.txt", shell=sys.platform == "linux")
+    pip = Path("venv/Scripts/pip.exe" if sys.platform == "win32" else "venv/bin/pip")
+    subprocess.check_call(f"{pip} install -U -r requirements.txt", shell=sys.platform == "linux")
+    return pip
 
+
+def configure_local_run() -> bool:
+    """Ask user if backend should run locally and update config."""
     config = Path("config.json")
-    config_dict = json.loads(config.read_text()) if config.exists() else {}
+    data = json.loads(config.read_text()) if config.exists() else {}
 
-    install_backend = None
-    while install_backend not in ("y", "n"):
-        install_backend = input("Are you using this locally? (y/n): ").lower()
-    if install_backend == "n":
-        config_dict["run_local"] = False
-        config.write_text(json.dumps(config_dict, indent=2))
+    choice = None
+    while choice not in ("y", "n"):
+        choice = input("Are you using this locally? (y/n): ").lower()
+
+    run_local = choice == "y"
+    data["run_local"] = run_local
+    config.write_text(json.dumps(data, indent=2))
+    return run_local
+
+
+def update_submodules() -> None:
+    subprocess.check_call("git submodule update --init --recursive", shell=sys.platform == "linux")
+
+
+def run_backend_installer(python: Path) -> None:
+    """Execute the backend installer inside its directory."""
+    os.chdir("backend")
+    try:
+        subprocess.check_call(f"{python} installer.py local", shell=sys.platform == "linux")
+    finally:
+        os.chdir("..")
+
+
+def main() -> None:
+    if not check_environment():
         return
-    config_dict["run_local"] = True
-    config.write_text(json.dumps(config_dict, indent=2))
 
-    subprocess.check_call(
-        "git submodule update --init --recursive",
-        shell=sys.platform == "linux",
-    )
-    os.chdir(Path("backend"))
-    subprocess.check_call(f"{python} installer.py local", shell=sys.platform == "linux")
+    create_virtualenv()
+    if configure_local_run():
+        update_submodules()
+        python = Path("venv/Scripts/python.exe" if sys.platform == "win32" else "venv/bin/python")
+        if Path("backend/sd_scripts").exists():
+            run_backend_installer(python)
+        else:
+            print("ERROR: backend submodules not found after update.")
 
 
 if __name__ == "__main__":
